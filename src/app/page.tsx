@@ -16,12 +16,12 @@ export default function Home() {
     if (!files || files.length === 0) return
 
     setConverting(true)
-    const newResults: Array<{name: string, html: string}> = []
+    const newResults: Array<{name: string, html: string, originalPath: string}> = []
 
     for (let i = 0; i < files.length; i++) {
       try {
         const html = await convertWordToHtml(files[i])
-        const file = files[i] as any
+        const file = files[i] as File & { path?: string; webkitRelativePath?: string }
         const originalPath = file.path || file.webkitRelativePath || ''
         newResults.push({
           name: files[i].name.replace('.docx', '.html'),
