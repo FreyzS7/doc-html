@@ -22,6 +22,9 @@
 
 # misc
 .DS_Store
+.claude
+.CLAUDE.md
+CLAUDE.md
 *.pem
 
 # debug
