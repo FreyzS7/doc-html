@@ -5,22 +5,27 @@ import { convertWordToHtml } from '@/lib/converter'
 export default function Home() {
   const [files, setFiles] = useState<FileList | null>(null)
   const [converting, setConverting] = useState(false)
+  const [useImageBB, setUseImageBB] = useState(true)
+  const [currentProgress, setCurrentProgress] = useState({ current: 0, total: 0, fileName: '' })
   const [results, setResults] = useState<Array<{name: string, html: string, originalPath: string}>>([])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files)
     setResults([])
+    setCurrentProgress({ current: 0, total: 0, fileName: '' })
   }
 
   const handleConvert = async () => {
     if (!files || files.length === 0) return
 
     setConverting(true)
+    setCurrentProgress({ current: 0, total: files.length, fileName: '' })
     const newResults: Array<{name: string, html: string, originalPath: string}> = []
 
     for (let i = 0; i < files.length; i++) {
       try {
-        const html = await convertWordToHtml(files[i])
+        setCurrentProgress({ current: i + 1, total: files.length, fileName: files[i].name })
+        const html = await convertWordToHtml(files[i], useImageBB)
         const file = files[i] as File & { path?: string; webkitRelativePath?: string }
         const originalPath = file.path || file.webkitRelativePath || ''
         newResults.push({
@@ -35,6 +40,7 @@ export default function Home() {
 
     setResults(newResults)
     setConverting(false)
+    setCurrentProgress({ current: 0, total: 0, fileName: '' })
   }
 
   const downloadHtml = (filename: string, html: string) => {
@@ -74,6 +80,26 @@ export default function Home() {
             />
           </div>
 
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={useImageBB}
+                onChange={(e) => setUseImageBB(e.target.checked)}
+                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="text-sm text-gray-700">
+                Upload images to ImageBB (requires free API key)
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              {useImageBB 
+                ? 'Images will be uploaded to ImageBB and linked in HTML' 
+                : 'Images will be embedded as base64 data URIs'
+              }
+            </p>
+          </div>
+
           {files && files.length > 0 && (
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
@@ -84,6 +110,21 @@ export default function Home() {
                   <li key={index}>• {file.name}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {converting && currentProgress.total > 0 && (
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Converting: {currentProgress.fileName}</span>
+                <span>{currentProgress.current} of {currentProgress.total}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(currentProgress.current / currentProgress.total) * 100}%` }}
+                ></div>
+              </div>
             </div>
           )}
 
