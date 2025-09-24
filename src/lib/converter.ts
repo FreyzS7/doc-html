@@ -208,8 +208,13 @@ async function addFontFormatting(html: string, arrayBuffer: ArrayBuffer): Promis
 function addImageStyling(html: string): string {
   // Add CSS for essential image styling and common font sizes
   const css = `<style>
-    img{max-width:100%;height:auto}
-    img[width][height]{width:auto;height:auto}
+    img{
+      width:80%;
+      height:auto;
+      display:block;
+      margin:30px auto;
+    }
+    img[width][height]{width:80%;height:auto}
     .font-large{font-size:20pt}
     .font-medium{font-size:16pt}
     .font-small{font-size:12pt}
