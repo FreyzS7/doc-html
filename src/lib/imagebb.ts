@@ -1,7 +1,7 @@
 // ImageBB API integration for image uploads
 // Get a free API key from https://api.imgbb.com/
 
-const IMAGEBB_API_KEY = process.env.NEXT_PUBLIC_IMAGEBB_API_KEY || 'YOUR_API_KEY_HERE'
+const IMAGEBB_API_KEY = process.env.IMAGEBB_API_KEY || 'YOUR_API_KEY_HERE'
 
 export interface ImageBBUploadResponse {
   success: boolean
