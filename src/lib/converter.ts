@@ -54,11 +54,11 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
   
   const result = await mammoth.convertToHtml({ arrayBuffer }, {
     styleMap: [
-      "p[style-name='Heading 1'] => p > strong:fresh",
-      "p[style-name='Heading 2'] => p > strong:fresh", 
-      "p[style-name='Heading 3'] => p > strong:fresh",
-      "p[style-name='Title'] => p > strong:fresh",
-      "p[style-name='Subtitle'] => p > strong:fresh",
+      "p[style-name='Heading 1'] => h1:fresh",
+      "p[style-name='Heading 2'] => h2:fresh", 
+      "p[style-name='Heading 3'] => h3:fresh",
+      "p[style-name='Title'] => h1:fresh",
+      "p[style-name='Subtitle'] => h2:fresh",
       "b => strong",
       "i => em",
       "u => u"
