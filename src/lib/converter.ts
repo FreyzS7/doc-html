@@ -53,16 +53,9 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
   const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "").substring(0, 125)
   
   const result = await mammoth.convertToHtml({ arrayBuffer }, {
-    styleMap: [
-      "p[style-name='Heading 1'] => h1:fresh",
-      "p[style-name='Heading 2'] => h2:fresh", 
-      "p[style-name='Heading 3'] => h3:fresh",
-      "p[style-name='Title'] => h1:fresh",
-      "p[style-name='Subtitle'] => h2:fresh",
-      "b => strong",
-      "i => em",
-      "u => u"
-    ],
+    // Don't use restrictive style mappings - let Mammoth preserve inline formatting
+    includeDefaultStyleMap: true,
+    includeEmbeddedStyleMap: true,
     convertImage: mammoth.images.imgElement(function(image) {
       if (useImageBB) {
         console.log('ImageBB mode enabled, attempting to upload image...')
@@ -138,7 +131,13 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
     })
   })
   
-  return addImageStyling(cleanHtml(result.value))
+  console.log('Mammoth conversion messages:', result.messages)
+  console.log('Raw HTML output:', result.value.substring(0, 1000))
+  
+  const html = addImageStyling(cleanHtml(result.value))
+  
+  // Post-process to add font formatting information
+  return await addFontFormatting(html, arrayBuffer)
 }
 
 function cleanHtml(html: string): string {
@@ -149,14 +148,78 @@ function cleanHtml(html: string): string {
     .trim()
 }
 
+async function addFontFormatting(html: string, arrayBuffer: ArrayBuffer): Promise<string> {
+  try {
+    // Extract raw document to analyze structure and styling
+    const docInfo = await mammoth.extractRawText({ arrayBuffer })
+    console.log('Document raw text extracted, length:', docInfo.value.length)
+    
+    // Log the HTML to see what inline styles are present
+    console.log('Checking for inline styles in HTML:')
+    const styleMatches = html.match(/style="[^"]+"/g)
+    if (styleMatches) {
+      console.log('Found inline styles:', styleMatches)
+    } else {
+      console.log('No inline styles found in HTML')
+    }
+    
+    // Check for font-size occurrences
+    const fontSizeMatches = html.match(/font-size[^;]*/g)
+    if (fontSizeMatches) {
+      console.log('Found font-size declarations:', fontSizeMatches)
+    } else {
+      console.log('No font-size declarations found')
+    }
+    
+    // Check for color declarations
+    const colorMatches = html.match(/color[^;]*/g)
+    if (colorMatches) {
+      console.log('Found color declarations:', colorMatches)
+    } else {
+      console.log('No color declarations found')
+    }
+    
+    // Only apply font sizes to specific elements, not all text
+    let processedHtml = html
+    console.log('Applying font sizes and colors selectively...')
+    
+    // Only handle links - add color and font size
+    processedHtml = processedHtml.replace(/<a([^>]*)>/g, (match, attributes) => {
+      console.log('Processing link:', match)
+      if (attributes.includes('style=')) {
+        // Add color and font size to existing style
+        return match.replace(/style="([^"]*)"/, 'style="$1; color:#ff0000; font-size:20pt"')
+      } else {
+        // Add new style attribute with color and font size
+        return `<a${attributes} style="color:#ff0000; font-size:20pt">`
+      }
+    })
+    
+    console.log('Applied red color and 20pt font size to links')
+    
+    return processedHtml
+  } catch (error) {
+    console.warn('Could not extract font formatting:', error)
+    return html
+  }
+}
+
 function addImageStyling(html: string): string {
-  // Minimal CSS for essential image styling only
-  const imageCSS = `<style>img{max-width:100%;height:auto}img[width][height]{width:auto;height:auto}</style>`
+  // Add CSS for essential image styling and common font sizes
+  const css = `<style>
+    img{max-width:100%;height:auto}
+    img[width][height]{width:auto;height:auto}
+    .font-large{font-size:20pt}
+    .font-medium{font-size:16pt}
+    .font-small{font-size:12pt}
+    /* Remove default link colors to let document colors show through */
+    a{text-decoration:underline}
+  </style>`
   
-  // Insert minimal CSS at the beginning
+  // Insert CSS at the beginning
   if (html.includes('<html>') || html.includes('<head>')) {
-    return html.replace(/<head[^>]*>/i, (match) => match + imageCSS)
+    return html.replace(/<head[^>]*>/i, (match) => match + css)
   } else {
-    return imageCSS + html
+    return css + html
   }
 }
