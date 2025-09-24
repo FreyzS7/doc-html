@@ -49,6 +49,9 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
   console.log('Converting file:', file.name, 'useImageBB:', useImageBB)
   const arrayBuffer = await file.arrayBuffer()
   
+  // Get filename without extension for alt text, limit to 125 characters for SEO best practices
+  const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "").substring(0, 125)
+  
   const result = await mammoth.convertToHtml({ arrayBuffer }, {
     styleMap: [
       "p[style-name='Heading 1'] => p > strong:fresh",
@@ -85,7 +88,7 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
               src: imageBBUrl,
               width: processed.width.toString(),
               height: processed.height.toString(),
-              alt: `Image ${processed.width}x${processed.height}`,
+              alt: fileNameWithoutExt,
               style: `width:${processed.width}px;height:${processed.height}px;max-width:100%;height:auto`
             }
           } catch (error) {
@@ -97,13 +100,13 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
                 src: "data:image/jpeg;base64," + processed.compressedBase64,
                 width: processed.width.toString(),
                 height: processed.height.toString(),
-                alt: `Image ${processed.width}x${processed.height}`,
+                alt: fileNameWithoutExt,
                 style: `width:${processed.width}px;height:${processed.height}px;max-width:100%;height:auto`
               }
             } catch (dimError) {
               return {
                 src: "data:" + image.contentType + ";base64," + imageBuffer,
-                alt: "Image",
+                alt: fileNameWithoutExt,
                 style: "max-width:100%;height:auto"
               }
             }
@@ -119,14 +122,14 @@ export async function convertWordToHtml(file: File, useImageBB: boolean = false)
               src: "data:image/jpeg;base64," + processed.compressedBase64,
               width: processed.width.toString(),
               height: processed.height.toString(),
-              alt: `Image ${processed.width}x${processed.height}`,
+              alt: fileNameWithoutExt,
               style: `width:${processed.width}px;height:${processed.height}px;max-width:100%;height:auto`
             }
           } catch (error) {
             console.error('Failed to process image:', error)
             return {
               src: "data:" + image.contentType + ";base64," + imageBuffer,
-              alt: "Image",
+              alt: fileNameWithoutExt,
               style: "max-width:100%;height:auto"
             }
           }
