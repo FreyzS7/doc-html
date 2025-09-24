@@ -155,6 +155,7 @@ async function addFontFormatting(html: string, arrayBuffer: ArrayBuffer): Promis
     console.log('Document raw text extracted, length:', docInfo.value.length)
     
     // Log the HTML to see what inline styles are present
+  
     console.log('Checking for inline styles in HTML:')
     const styleMatches = html.match(/style="[^"]+"/g)
     if (styleMatches) {
@@ -187,11 +188,11 @@ async function addFontFormatting(html: string, arrayBuffer: ArrayBuffer): Promis
     processedHtml = processedHtml.replace(/<a([^>]*)>/g, (match, attributes) => {
       console.log('Processing link:', match)
       if (attributes.includes('style=')) {
-        // Add color and font size to existing style
-        return match.replace(/style="([^"]*)"/, 'style="$1; color:#ff0000; font-size:20pt"')
+        // Add color and font size to existing style with !important
+        return match.replace(/style="([^"]*)"/, 'style="$1; color:#ff0000 !important; font-size:20pt"')
       } else {
-        // Add new style attribute with color and font size
-        return `<a${attributes} style="color:#ff0000; font-size:20pt">`
+        // Add new style attribute with color and font size, using !important for color
+        return `<a${attributes} style="color:#ff0000 !important; font-size:20pt">`
       }
     })
     
